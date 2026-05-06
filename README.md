@@ -13,6 +13,26 @@ Three load-bearing decisions are documented in `docs/methodology.md`:
 snapshot-first grading, per-agent MCP token scoping, and the standardised
 metric names (`cost_per_correct`, `cost_per_correct_degraded`).
 
+## Phase 3 status
+
+- Variant B (consolidated context engine) under `src/arb/context/`:
+  - Three materialised views — `customer_360`, `order_state`,
+    `returns_eligibility` — with output schemas in
+    `src/arb/context/schemas.py` and reference SQL under `sql/views/`.
+  - `ContextEngine` protocol with `get_view(name, params)`.
+  - `LocalContextEngine` — in-process reference oracle for
+    `make bench-laptop` and CI. Tagged `engine=local` in every result.
+    **Not the system under test.** See `docs/byo_streaming.md`.
+  - `DeltaStreamContextEngine` — production backend. Credentials via env
+    vars (see `.env.example`); imports deferred so the local path runs
+    without the SDK.
+- Single Variant B MCP server (`python -m arb.mcp.servers.context_entrypoint`)
+  with one bearer token carrying only `context:read`.
+- `config/variant_b.yaml` with per-view freshness SLA (default 250 ms,
+  per-view overrides supported).
+- `docs/byo_streaming.md` documents the BYO-streaming-stack contract for
+  forkers who don't use DeltaStream (Flink + ClickHouse, Materialize, etc).
+
 ## Phase 2 status
 
 - Six per-source MCP servers (Variant A) under `src/arb/mcp/`:
