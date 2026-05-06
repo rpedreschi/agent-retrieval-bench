@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "PaymentEvent",
+  "namespace": "retail",
+  "fields": [
+    {"name": "tenant_id", "type": "string"},
+    {"name": "event_id", "type": "string"},
+    {"name": "order_id", "type": "string"},
+    {"name": "kind", "type": {"type": "enum", "name": "PaymentEventKind", "symbols": ["AUTHORIZED", "CAPTURED", "REFUND", "CHARGEBACK", "FAILED"]}},
+    {"name": "amount_cents", "type": "long"},
+    {"name": "currency", "type": "string"},
+    {"name": "occurred_at_ms", "type": "long"}
+  ]
+}

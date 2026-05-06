@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "Customer",
+  "namespace": "retail",
+  "fields": [
+    {"name": "tenant_id", "type": "string"},
+    {"name": "customer_id", "type": "string"},
+    {"name": "email", "type": "string"},
+    {"name": "name", "type": "string"},
+    {"name": "tier", "type": {"type": "enum", "name": "CustomerTier", "symbols": ["BRONZE", "SILVER", "GOLD", "PLATINUM"]}},
+    {"name": "created_at_ms", "type": "long"},
+    {"name": "updated_at_ms", "type": "long"},
+    {"name": "version", "type": "long"}
+  ]
+}

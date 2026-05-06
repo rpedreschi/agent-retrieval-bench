@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "ReturnEvent",
+  "namespace": "retail",
+  "fields": [
+    {"name": "tenant_id", "type": "string"},
+    {"name": "event_id", "type": "string"},
+    {"name": "return_id", "type": "string"},
+    {"name": "order_id", "type": "string"},
+    {"name": "status", "type": {"type": "enum", "name": "ReturnStatus", "symbols": ["REQUESTED", "APPROVED", "RECEIVED", "REFUNDED", "REJECTED"]}},
+    {"name": "reason", "type": "string"},
+    {"name": "amount_cents", "type": "long"},
+    {"name": "occurred_at_ms", "type": "long"}
+  ]
+}

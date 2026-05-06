@@ -1,0 +1,30 @@
+# Laptop-mode scale: full-mode cardinalities divided by ~100.
+tenant_id: "tenant-default"
+
+cardinalities:
+  customers: 1000
+  warehouses: 3
+  skus: 200
+  baseline_orders: 500
+
+rates:
+  # All rates are per simulated second.
+  orders_per_sec: 1.0
+  inventory_snapshot_interval_sec: 5.0
+  return_probability: 0.025      # fraction of orders that produce a return
+  payment_event_probability: 0.015
+  support_ticket_per_sec: 0.2
+
+simulation:
+  duration_sec: 30
+  tick_sec: 1.0
+  start_epoch_ms: 1735689600000  # 2025-01-01T00:00:00Z, deterministic clock origin
+
+scenarios:
+  - name: chargeback_downgrade_refund
+    fire_at_tick: 10
+
+kafka:
+  bootstrap_servers: "localhost:9092"
+  schema_registry_url: "http://localhost:8081"
+  enabled: false  # Phase 1 default: dry-run, no broker required for tests.

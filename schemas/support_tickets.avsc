@@ -1,0 +1,15 @@
+{
+  "type": "record",
+  "name": "SupportTicket",
+  "namespace": "retail",
+  "fields": [
+    {"name": "tenant_id", "type": "string"},
+    {"name": "event_id", "type": "string"},
+    {"name": "ticket_id", "type": "string"},
+    {"name": "customer_id", "type": "string"},
+    {"name": "order_id", "type": ["null", "string"], "default": null},
+    {"name": "status", "type": {"type": "enum", "name": "TicketStatus", "symbols": ["OPEN", "PENDING", "RESOLVED", "CLOSED"]}},
+    {"name": "subject", "type": "string"},
+    {"name": "occurred_at_ms", "type": "long"}
+  ]
+}

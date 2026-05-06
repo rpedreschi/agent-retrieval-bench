@@ -1,0 +1,13 @@
+{
+  "type": "record",
+  "name": "InventorySnapshot",
+  "namespace": "retail",
+  "fields": [
+    {"name": "tenant_id", "type": "string"},
+    {"name": "snapshot_id", "type": "string"},
+    {"name": "sku", "type": "string"},
+    {"name": "warehouse_id", "type": "string"},
+    {"name": "quantity_on_hand", "type": "int"},
+    {"name": "occurred_at_ms", "type": "long"}
+  ]
+}

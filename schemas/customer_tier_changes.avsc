@@ -1,0 +1,14 @@
+{
+  "type": "record",
+  "name": "CustomerTierChange",
+  "namespace": "retail",
+  "fields": [
+    {"name": "tenant_id", "type": "string"},
+    {"name": "event_id", "type": "string"},
+    {"name": "customer_id", "type": "string"},
+    {"name": "from_tier", "type": {"type": "enum", "name": "CustomerTier", "symbols": ["BRONZE", "SILVER", "GOLD", "PLATINUM"]}},
+    {"name": "to_tier", "type": "retail.CustomerTier"},
+    {"name": "reason", "type": "string"},
+    {"name": "occurred_at_ms", "type": "long"}
+  ]
+}

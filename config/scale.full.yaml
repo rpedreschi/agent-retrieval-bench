@@ -1,0 +1,29 @@
+# Full-mode (headline) cardinalities.
+tenant_id: "tenant-default"
+
+cardinalities:
+  customers: 100000
+  warehouses: 20
+  skus: 20000
+  baseline_orders: 50000
+
+rates:
+  orders_per_sec: 100.0
+  inventory_snapshot_interval_sec: 5.0
+  return_probability: 0.025
+  payment_event_probability: 0.015
+  support_ticket_per_sec: 5.0
+
+simulation:
+  duration_sec: 600
+  tick_sec: 1.0
+  start_epoch_ms: 1735689600000
+
+scenarios:
+  - name: chargeback_downgrade_refund
+    fire_at_tick: 60
+
+kafka:
+  bootstrap_servers: "localhost:9092"
+  schema_registry_url: "http://localhost:8081"
+  enabled: true
