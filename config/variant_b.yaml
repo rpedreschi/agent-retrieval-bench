@@ -1,14 +1,12 @@
-# Variant B — single consolidated context engine.
+# Variant B — single consolidated context engine, backed by DeltaStream.
 #
-# Engine selection is controlled by ARB_CONTEXT_ENGINE in the environment
-# (default: "local"). Credentials for the deltastream engine come from
-# environment variables (see .env.example) — never check them into config.
+# DeltaStream credentials come from environment variables; never check them
+# into config. See .env.example for the variables the entrypoint reads.
 #
 # freshness_sla_ms is per-view, with a "default" applied to any view that
-# does not set its own. Both engines honour this. The default of 250 ms is
-# the contract documented in docs/byo_streaming.md; per-view overrides exist
-# to support cases where one view legitimately tolerates more lag than
-# another.
+# does not set its own. The default of 250 ms is the contract DeltaStream is
+# expected to honour; per-view overrides exist to support cases where one
+# view legitimately tolerates more lag than another.
 
 auth:
   tokens:

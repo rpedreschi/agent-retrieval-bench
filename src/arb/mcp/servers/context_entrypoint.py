@@ -1,11 +1,15 @@
 """FastMCP entrypoint for the single Variant B context server.
 
+Variant B is backed by DeltaStream. Credentials must be set in the environment
+(see ``.env.example``); this entrypoint exits with a clear error if they are
+missing.
+
 Run with::
 
     python -m arb.mcp.servers.context_entrypoint [config_path]
 
-Engine selection: ``ARB_CONTEXT_ENGINE=local|deltastream`` (default ``local``).
-The local engine is for laptop mode and is NOT the system under test.
+A DuckDB-backed alternative is stubbed in ``arb.context.duckdb_engine`` for a
+future addition.
 """
 from __future__ import annotations
 
@@ -16,8 +20,8 @@ from typing import Any
 
 import yaml
 
+from arb.context.deltastream import DeltaStreamContextEngine
 from arb.context.engine import ContextEngine
-from arb.context.local import LocalContextEngine
 from arb.mcp.auth import TokenRegistry
 from arb.mcp.tools.context import get_view
 
@@ -26,20 +30,8 @@ def _token() -> str | None:
     return os.environ.get("ARB_MCP_TOKEN")
 
 
-def build_engine(raw: dict[str, Any]) -> ContextEngine:
-    kind = os.environ.get("ARB_CONTEXT_ENGINE", "local")
-    sla = raw.get("freshness_sla_ms", {})
-    default_sla = int(sla.get("default", 0))
-    per_view = {
-        v: int(sla.get(v, default_sla))
-        for v in ("customer_360", "order_state", "returns_eligibility")
-    }
-    if kind == "local":
-        return LocalContextEngine(freshness_sla_ms=per_view)
-    if kind == "deltastream":
-        from arb.context.deltastream import DeltaStreamContextEngine
-        return DeltaStreamContextEngine()
-    raise RuntimeError(f"unknown ARB_CONTEXT_ENGINE: {kind!r}")
+def build_engine() -> ContextEngine:
+    return DeltaStreamContextEngine()
 
 
 def build_mcp(config_path: Path) -> Any:
@@ -47,7 +39,7 @@ def build_mcp(config_path: Path) -> Any:
 
     raw = yaml.safe_load(config_path.read_text())
     auth = TokenRegistry.from_dict(raw.get("auth", {}))
-    engine = build_engine(raw)
+    engine = build_engine()
 
     mcp = FastMCP("arb-variant-b-context")
 

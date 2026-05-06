@@ -29,7 +29,7 @@ mcp-source-%:
 	uv run python -m arb.mcp.servers.entrypoints $* config/variant_a.yaml
 
 mcp-context:
-	ARB_CONTEXT_ENGINE=local uv run python -m arb.mcp.servers.context_entrypoint config/variant_b.yaml
+	uv run python -m arb.mcp.servers.context_entrypoint config/variant_b.yaml
 
 # Phase 6 will wire this end-to-end. For now it just runs the laptop-mode generator.
 bench-laptop: up generate-laptop

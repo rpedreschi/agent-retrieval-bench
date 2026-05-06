@@ -5,7 +5,7 @@ Open benchmark comparing two retrieval architectures for production AI agents:
 - **Variant A** — MCP-per-source. One tool per operational data source; the LLM composes joins.
 - **Variant B** — Context engine. A single retrieval interface backed by continuously joined materialized views on a streaming engine.
 
-This repository is built in phases. **Phase 1 ships the world-state generator and Kafka topic layer only.** Subsequent phases add the two variants, the eval harness, the failure taxonomy, and the reproducibility wrapper.
+This repository is built in phases. Phases 1–3 ship the world-state generator, both variant implementations, and the methodology (snapshot-first grading, per-agent token scoping). Phases 4–6 add the eval harness, failure taxonomy, and reproducibility wrapper.
 
 ## Methodology
 
@@ -15,23 +15,19 @@ metric names (`cost_per_correct`, `cost_per_correct_degraded`).
 
 ## Phase 3 status
 
-- Variant B (consolidated context engine) under `src/arb/context/`:
-  - Three materialised views — `customer_360`, `order_state`,
-    `returns_eligibility` — with output schemas in
-    `src/arb/context/schemas.py` and reference SQL under `sql/views/`.
-  - `ContextEngine` protocol with `get_view(name, params)`.
-  - `LocalContextEngine` — in-process reference oracle for
-    `make bench-laptop` and CI. Tagged `engine=local` in every result.
-    **Not the system under test.** See `docs/byo_streaming.md`.
-  - `DeltaStreamContextEngine` — production backend. Credentials via env
-    vars (see `.env.example`); imports deferred so the local path runs
-    without the SDK.
+- Variant B is backed by **DeltaStream**. Three materialised views —
+  `customer_360`, `order_state`, `returns_eligibility` — with output
+  schemas in `src/arb/context/schemas.py` and reference SQL under
+  `sql/views/`.
+- `ContextEngine` protocol with a single `get_view(name, params)` entry
+  point. Implementation: `arb.context.deltastream.DeltaStreamContextEngine`.
+  Credentials come from environment variables only (see `.env.example`).
 - Single Variant B MCP server (`python -m arb.mcp.servers.context_entrypoint`)
   with one bearer token carrying only `context:read`.
 - `config/variant_b.yaml` with per-view freshness SLA (default 250 ms,
   per-view overrides supported).
-- `docs/byo_streaming.md` documents the BYO-streaming-stack contract for
-  forkers who don't use DeltaStream (Flink + ClickHouse, Materialize, etc).
+- A DuckDB-backed engine is stubbed in `arb.context.duckdb_engine` for a
+  future addition; not implemented in v1.
 
 ## Phase 2 status
 
@@ -88,8 +84,9 @@ See `docs/` (added in later phases) and the inline rationale in `src/arb/world/`
 
 - Vector / embedding topic — extension point for future RAG comparison.
 - Multi-tenancy — `tenant_id` exists but is hardcoded to one value.
-- Variants A/B implementations — Phases 2 and 3.
 - Eval harness — Phase 4.
+- DuckDB-backed alternative for Variant B — stub only; see
+  `arb.context.duckdb_engine`.
 
 ## License
 
