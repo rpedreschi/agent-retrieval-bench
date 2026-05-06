@@ -7,6 +7,27 @@ Open benchmark comparing two retrieval architectures for production AI agents:
 
 This repository is built in phases. **Phase 1 ships the world-state generator and Kafka topic layer only.** Subsequent phases add the two variants, the eval harness, the failure taxonomy, and the reproducibility wrapper.
 
+## Methodology
+
+Three load-bearing decisions are documented in `docs/methodology.md`:
+snapshot-first grading, per-agent MCP token scoping, and the standardised
+metric names (`cost_per_correct`, `cost_per_correct_degraded`).
+
+## Phase 2 status
+
+- Six per-source MCP servers (Variant A) under `src/arb/mcp/`:
+  customers, orders, inventory, returns, support, payments.
+- Each server is fed by a `ServingStore` with configurable
+  `replication_lag_ms` and `cache_ttl_ms` (per-source freshness profiles in
+  `config/variant_a.yaml`).
+- Bearer-token auth: Variant A's token carries the six `*:read` scopes and
+  nothing else. Calls without scope return a structured `auth_error`.
+- Fault injection (`latency_ms`, `error_rate`) wired for the degraded
+  condition; injected errors return a structured `source_error`.
+- `arb snapshot` writes a deterministic ground-truth JSON used for grading.
+- FastMCP wiring exposes one MCP server per source over stdio:
+  `python -m arb.mcp.servers.entrypoints {customers|orders|...}`.
+
 ## Phase 1 status
 
 - Single coherent world-state generator emitting to 8 Avro-encoded Kafka topics under the `retail.` namespace.

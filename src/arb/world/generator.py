@@ -296,12 +296,17 @@ class Generator:
         cfg = self.config
         ticks = int(cfg.duration_sec / cfg.tick_sec)
         for tick in range(ticks):
-            now_ms = cfg.start_epoch_ms + int((tick + 1) * cfg.tick_sec * 1000)
-            out = Outbox(cfg.tenant_id, now_ms, self.sink, self.state)
-            self._tick_natural(out, tick)
-            for scn in self.scenarios:
-                scn.maybe_fire(self.state, tick, out)
+            self.tick(tick)
         self.sink.flush()
+
+    def tick(self, tick: int) -> None:
+        """Advance the simulation by one tick. Public so the snapshot CLI can drive it."""
+        cfg = self.config
+        now_ms = cfg.start_epoch_ms + int((tick + 1) * cfg.tick_sec * 1000)
+        out = Outbox(cfg.tenant_id, now_ms, self.sink, self.state)
+        self._tick_natural(out, tick)
+        for scn in self.scenarios:
+            scn.maybe_fire(self.state, tick, out)
 
     def _tick_natural(self, out: Outbox, tick: int) -> None:
         cfg = self.config

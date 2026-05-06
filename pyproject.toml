@@ -13,6 +13,7 @@ dependencies = [
     "click>=8.1",
     "structlog>=24.1",
     "numpy>=1.26",
+    "mcp>=1.2",
 ]
 
 [project.optional-dependencies]
@@ -22,6 +23,7 @@ dev = [
     "mypy>=1.10",
     "ruff>=0.5",
     "types-PyYAML",
+    "fastavro>=1.9",
 ]
 
 [project.scripts]

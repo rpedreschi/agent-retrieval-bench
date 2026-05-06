@@ -1,0 +1,80 @@
+# Variant A — six per-source MCP servers.
+#
+# Each source declares:
+#   - freshness: replication_lag_ms (how far behind ground truth queries see),
+#                cache_ttl_ms (how long stale reads may be served).
+#   - faults:    latency_ms + error_rate (engaged in the *degraded* condition;
+#                tests pass inject_sleep=False so latency does not slow CI).
+#
+# Rationale for the per-source shape: real production systems have wildly
+# different freshness profiles per source. Inventory updates fast and often,
+# customer-tier rollups lag behind, payment events take seconds to reach the
+# read store. Variant B's context engine collapses this to one (much tighter)
+# SLA across all joined views — which is the comparison the benchmark exposes.
+
+auth:
+  tokens:
+    # The single token Variant A's agent receives. Carries every per-source
+    # read scope and nothing else.
+    "arb-variant-a-token":
+      - "customers:read"
+      - "orders:read"
+      - "inventory:read"
+      - "returns:read"
+      - "support:read"
+      - "payments:read"
+
+sources:
+  customers:
+    freshness:
+      replication_lag_ms: 1500
+      cache_ttl_ms: 5000
+    faults:
+      latency_ms: 0
+      error_rate: 0.0
+    seed: 1
+
+  orders:
+    freshness:
+      replication_lag_ms: 800
+      cache_ttl_ms: 1000
+    faults:
+      latency_ms: 0
+      error_rate: 0.0
+    seed: 2
+
+  inventory:
+    freshness:
+      replication_lag_ms: 200
+      cache_ttl_ms: 0
+    faults:
+      latency_ms: 0
+      error_rate: 0.0
+    seed: 3
+
+  returns:
+    freshness:
+      replication_lag_ms: 2000
+      cache_ttl_ms: 5000
+    faults:
+      latency_ms: 0
+      error_rate: 0.0
+    seed: 4
+
+  support:
+    freshness:
+      replication_lag_ms: 1000
+      cache_ttl_ms: 3000
+    faults:
+      latency_ms: 0
+      error_rate: 0.0
+    seed: 5
+
+  payments:
+    freshness:
+      replication_lag_ms: 5000
+      cache_ttl_ms: 0
+    faults:
+      latency_ms: 0
+      error_rate: 0.0
+    seed: 6
