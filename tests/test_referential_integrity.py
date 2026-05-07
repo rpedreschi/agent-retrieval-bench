@@ -46,10 +46,14 @@ def test_all_eight_topics_emitted(laptop_config) -> None:
     run(laptop_config, sink, seed=42)
     topics = set(sink.by_topic().keys())
     expected = {
-        "retail.customers", "retail.customer_tier_changes",
-        "retail.orders", "retail.order_items",
-        "retail.inventory_snapshots", "retail.returns",
-        "retail.support_tickets", "retail.payment_events",
+        "retail.customers",
+        "retail.customer_tier_changes",
+        "retail.orders",
+        "retail.order_items",
+        "retail.inventory_snapshots",
+        "retail.returns",
+        "retail.support_tickets",
+        "retail.payment_events",
     }
     # tier_changes only fires via scenarios, but the laptop config schedules one.
     assert expected.issubset(topics), f"missing: {expected - topics}"

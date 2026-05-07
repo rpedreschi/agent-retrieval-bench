@@ -1,4 +1,5 @@
 """Smoke test: the FastMCP wiring imports and registers tools for each source."""
+
 from __future__ import annotations
 
 from pathlib import Path

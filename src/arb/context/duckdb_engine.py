@@ -20,6 +20,7 @@ When wiring this up, the work is roughly:
 
 Headline benchmark numbers must continue to come from DeltaStream regardless.
 """
+
 from __future__ import annotations
 
 from typing import Any

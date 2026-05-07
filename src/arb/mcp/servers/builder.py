@@ -3,6 +3,7 @@
 Used both by the MCP entrypoints (which then attach FastMCP wiring) and by
 tests (which call tool functions directly).
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -54,6 +55,7 @@ STORE_TO_TOPIC: dict[str, str] = {
 @dataclass
 class VariantABundle:
     """All six SourceServers, keyed by store name (so tools can grab the right one)."""
+
     auth: TokenRegistry
     servers: dict[str, SourceServer] = field(default_factory=dict)
 

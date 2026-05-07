@@ -4,6 +4,7 @@ Uses an in-test FakeContextEngine so CI can exercise auth/scope/wiring without
 DeltaStream credentials. Real view semantics are covered by integration tests
 against DeltaStream (Phase 6).
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -30,8 +31,11 @@ def setup():
 def test_get_view_with_valid_token_returns_payload(setup) -> None:
     eng, auth = setup
     res = get_view(
-        engine=eng, auth=auth, token=TOKEN,
-        name="customer_360", params={"customer_id": "cust-1"},
+        engine=eng,
+        auth=auth,
+        token=TOKEN,
+        name="customer_360",
+        params={"customer_id": "cust-1"},
     )
     assert res["view"] == "customer_360"
     assert res["engine"] == "fake"
@@ -56,8 +60,11 @@ def test_get_view_with_wrong_scope_returns_auth_error(setup) -> None:
 def test_unknown_key_returns_not_found(setup) -> None:
     eng, auth = setup
     res = get_view(
-        engine=eng, auth=auth, token=TOKEN,
-        name="customer_360", params={"customer_id": "ghost"},
+        engine=eng,
+        auth=auth,
+        token=TOKEN,
+        name="customer_360",
+        params={"customer_id": "ghost"},
     )
     assert res["error"] == "not_found"
 
@@ -72,6 +79,7 @@ def test_variant_b_token_carries_only_context_read() -> None:
 def test_duckdb_stub_raises_not_implemented() -> None:
     """The DuckDB engine is a stub for a future addition."""
     from arb.context.duckdb_engine import DuckDBContextEngine
+
     with pytest.raises(NotImplementedError):
         DuckDBContextEngine()
 

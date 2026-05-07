@@ -22,9 +22,11 @@ def _server(error_rate: float, seed: int = 0):
         seed=seed,
         inject_sleep=False,
     )
-    srv.store.ingest([
-        {"customer_id": "c1", "tier": "BRONZE", "occurred_at_ms": 1, "version": 1},
-    ])
+    srv.store.ingest(
+        [
+            {"customer_id": "c1", "tier": "BRONZE", "occurred_at_ms": 1, "version": 1},
+        ]
+    )
     srv.clock_ms = lambda: 10**13
     return srv
 
@@ -63,7 +65,11 @@ def test_variant_a_token_has_all_six_scopes() -> None:
     bundle = load_variant_a(repo / "config" / "variant_a.yaml", inject_sleep=False)
     scopes = bundle.auth.tokens["arb-variant-a-token"]
     expected = {
-        "customers:read", "orders:read", "inventory:read",
-        "returns:read", "support:read", "payments:read",
+        "customers:read",
+        "orders:read",
+        "inventory:read",
+        "returns:read",
+        "support:read",
+        "payments:read",
     }
     assert scopes == expected

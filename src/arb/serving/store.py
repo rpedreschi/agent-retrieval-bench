@@ -17,6 +17,7 @@ These knobs are configured per-source in ``config/variant_a.yaml`` and are the
 mechanism by which the benchmark exposes Variant A to realistic per-source
 freshness profiles.
 """
+
 from __future__ import annotations
 
 from collections.abc import Callable, Iterable
@@ -51,6 +52,7 @@ class ServingStore:
     "view" dict. Reads at time T see only events with occurred_at_ms <=
     T - replication_lag_ms.
     """
+
     name: str
     projector: Projector
     profile: FreshnessProfile = field(default_factory=FreshnessProfile)

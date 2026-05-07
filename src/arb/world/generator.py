@@ -9,6 +9,7 @@ Tick-driven. Each tick:
 All randomness goes through arb.world.rng.RngBundle so a fixed seed produces a
 byte-identical event stream across runs.
 """
+
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
@@ -42,6 +43,7 @@ class Sink(Protocol):
 @dataclass
 class InMemorySink:
     """Records every emission. Used by tests and by --dry-run runs."""
+
     events: list[tuple[str, str, dict[str, Any]]] = field(default_factory=list)
 
     def emit(self, topic: str, key: str, value: dict[str, Any]) -> None:
@@ -67,6 +69,7 @@ class Outbox:
     Centralising emission here means scenarios and the natural generator share
     the same emission contract and the same ID conventions.
     """
+
     tenant_id: str
     now_ms: int
     sink: Sink
@@ -78,111 +81,159 @@ class Outbox:
     # ----- typed helpers (one per topic) -----
 
     def customer_upsert(self, c: Customer) -> None:
-        self.emit("retail.customers", c.customer_id, {
-            "tenant_id": self.tenant_id,
-            "customer_id": c.customer_id,
-            "email": c.email,
-            "name": c.name,
-            "tier": c.tier,
-            "created_at_ms": c.created_at_ms,
-            "updated_at_ms": c.updated_at_ms,
-            "version": c.version,
-        })
+        self.emit(
+            "retail.customers",
+            c.customer_id,
+            {
+                "tenant_id": self.tenant_id,
+                "customer_id": c.customer_id,
+                "email": c.email,
+                "name": c.name,
+                "tier": c.tier,
+                "created_at_ms": c.created_at_ms,
+                "updated_at_ms": c.updated_at_ms,
+                "version": c.version,
+            },
+        )
 
     def tier_change(
-        self, *, customer_id: str, from_tier: str, to_tier: str,
-        reason: str, occurred_at_ms: int,
+        self,
+        *,
+        customer_id: str,
+        from_tier: str,
+        to_tier: str,
+        reason: str,
+        occurred_at_ms: int,
     ) -> None:
         eid = f"tc-{self.state.next_id('tier_change')}"
-        self.emit("retail.customer_tier_changes", customer_id, {
-            "tenant_id": self.tenant_id,
-            "event_id": eid,
-            "customer_id": customer_id,
-            "from_tier": from_tier,
-            "to_tier": to_tier,
-            "reason": reason,
-            "occurred_at_ms": occurred_at_ms,
-        })
+        self.emit(
+            "retail.customer_tier_changes",
+            customer_id,
+            {
+                "tenant_id": self.tenant_id,
+                "event_id": eid,
+                "customer_id": customer_id,
+                "from_tier": from_tier,
+                "to_tier": to_tier,
+                "reason": reason,
+                "occurred_at_ms": occurred_at_ms,
+            },
+        )
 
     def order_event(self, o: Order, occurred_at_ms: int) -> None:
         eid = f"oe-{self.state.next_id('order_event')}"
-        self.emit("retail.orders", o.order_id, {
-            "tenant_id": self.tenant_id,
-            "event_id": eid,
-            "order_id": o.order_id,
-            "customer_id": o.customer_id,
-            "status": o.status.value,
-            "total_cents": o.total_cents,
-            "currency": o.currency,
-            "occurred_at_ms": occurred_at_ms,
-        })
+        self.emit(
+            "retail.orders",
+            o.order_id,
+            {
+                "tenant_id": self.tenant_id,
+                "event_id": eid,
+                "order_id": o.order_id,
+                "customer_id": o.customer_id,
+                "status": o.status.value,
+                "total_cents": o.total_cents,
+                "currency": o.currency,
+                "occurred_at_ms": occurred_at_ms,
+            },
+        )
 
     def order_item(self, it: OrderItem, occurred_at_ms: int) -> None:
-        self.emit("retail.order_items", it.order_id, {
-            "tenant_id": self.tenant_id,
-            "order_item_id": it.order_item_id,
-            "order_id": it.order_id,
-            "sku": it.sku,
-            "quantity": it.quantity,
-            "unit_price_cents": it.unit_price_cents,
-            "warehouse_id": it.warehouse_id,
-            "occurred_at_ms": occurred_at_ms,
-        })
+        self.emit(
+            "retail.order_items",
+            it.order_id,
+            {
+                "tenant_id": self.tenant_id,
+                "order_item_id": it.order_item_id,
+                "order_id": it.order_id,
+                "sku": it.sku,
+                "quantity": it.quantity,
+                "unit_price_cents": it.unit_price_cents,
+                "warehouse_id": it.warehouse_id,
+                "occurred_at_ms": occurred_at_ms,
+            },
+        )
 
     def inventory_snapshot(self, inv: InventoryRow, occurred_at_ms: int) -> None:
         sid = f"is-{self.state.next_id('inv_snap')}"
-        self.emit("retail.inventory_snapshots", f"{inv.sku}@{inv.warehouse_id}", {
-            "tenant_id": self.tenant_id,
-            "snapshot_id": sid,
-            "sku": inv.sku,
-            "warehouse_id": inv.warehouse_id,
-            "quantity_on_hand": inv.quantity_on_hand,
-            "occurred_at_ms": occurred_at_ms,
-        })
+        self.emit(
+            "retail.inventory_snapshots",
+            f"{inv.sku}@{inv.warehouse_id}",
+            {
+                "tenant_id": self.tenant_id,
+                "snapshot_id": sid,
+                "sku": inv.sku,
+                "warehouse_id": inv.warehouse_id,
+                "quantity_on_hand": inv.quantity_on_hand,
+                "occurred_at_ms": occurred_at_ms,
+            },
+        )
 
     def return_event(
-        self, *, return_id: str, order_id: str, status: ReturnStatus,
-        reason: str, amount_cents: int, occurred_at_ms: int,
+        self,
+        *,
+        return_id: str,
+        order_id: str,
+        status: ReturnStatus,
+        reason: str,
+        amount_cents: int,
+        occurred_at_ms: int,
     ) -> None:
         eid = f"re-{self.state.next_id('return_event')}"
-        self.emit("retail.returns", return_id, {
-            "tenant_id": self.tenant_id,
-            "event_id": eid,
-            "return_id": return_id,
-            "order_id": order_id,
-            "status": status.value,
-            "reason": reason,
-            "amount_cents": amount_cents,
-            "occurred_at_ms": occurred_at_ms,
-        })
+        self.emit(
+            "retail.returns",
+            return_id,
+            {
+                "tenant_id": self.tenant_id,
+                "event_id": eid,
+                "return_id": return_id,
+                "order_id": order_id,
+                "status": status.value,
+                "reason": reason,
+                "amount_cents": amount_cents,
+                "occurred_at_ms": occurred_at_ms,
+            },
+        )
 
     def support_ticket(self, t: SupportTicket, occurred_at_ms: int) -> None:
         eid = f"se-{self.state.next_id('ticket_event')}"
-        self.emit("retail.support_tickets", t.ticket_id, {
-            "tenant_id": self.tenant_id,
-            "event_id": eid,
-            "ticket_id": t.ticket_id,
-            "customer_id": t.customer_id,
-            "order_id": t.order_id,
-            "status": t.status.value,
-            "subject": t.subject,
-            "occurred_at_ms": occurred_at_ms,
-        })
+        self.emit(
+            "retail.support_tickets",
+            t.ticket_id,
+            {
+                "tenant_id": self.tenant_id,
+                "event_id": eid,
+                "ticket_id": t.ticket_id,
+                "customer_id": t.customer_id,
+                "order_id": t.order_id,
+                "status": t.status.value,
+                "subject": t.subject,
+                "occurred_at_ms": occurred_at_ms,
+            },
+        )
 
     def payment_event(
-        self, *, order_id: str, kind: PaymentEventKind,
-        amount_cents: int, currency: str, occurred_at_ms: int,
+        self,
+        *,
+        order_id: str,
+        kind: PaymentEventKind,
+        amount_cents: int,
+        currency: str,
+        occurred_at_ms: int,
     ) -> None:
         eid = f"pe-{self.state.next_id('payment_event')}"
-        self.emit("retail.payment_events", order_id, {
-            "tenant_id": self.tenant_id,
-            "event_id": eid,
-            "order_id": order_id,
-            "kind": kind.value,
-            "amount_cents": amount_cents,
-            "currency": currency,
-            "occurred_at_ms": occurred_at_ms,
-        })
+        self.emit(
+            "retail.payment_events",
+            order_id,
+            {
+                "tenant_id": self.tenant_id,
+                "event_id": eid,
+                "order_id": order_id,
+                "kind": kind.value,
+                "amount_cents": amount_cents,
+                "currency": currency,
+                "occurred_at_ms": occurred_at_ms,
+            },
+        )
 
 
 # ---------------------------------------------------------------- config -----
@@ -330,15 +381,20 @@ class Generator:
             if rng.random() < cfg.return_probability * cfg.tick_sec:
                 ret_id = f"ret-{self.state.next_id('return')}"
                 r = Return(
-                    return_id=ret_id, order_id=o.order_id,
+                    return_id=ret_id,
+                    order_id=o.order_id,
                     status=ReturnStatus.REQUESTED,
-                    reason="customer_request", amount_cents=o.total_cents,
+                    reason="customer_request",
+                    amount_cents=o.total_cents,
                 )
                 self.state.returns[ret_id] = r
                 out.return_event(
-                    return_id=ret_id, order_id=o.order_id,
-                    status=r.status, reason=r.reason,
-                    amount_cents=r.amount_cents, occurred_at_ms=out.now_ms,
+                    return_id=ret_id,
+                    order_id=o.order_id,
+                    status=r.status,
+                    reason=r.reason,
+                    amount_cents=r.amount_cents,
+                    occurred_at_ms=out.now_ms,
                 )
 
         # Payment events (probabilistic)
@@ -347,8 +403,10 @@ class Generator:
             if rng.random() < cfg.payment_event_probability * cfg.tick_sec:
                 kind = PaymentEventKind.FAILED if rng.random() < 0.5 else PaymentEventKind.REFUND
                 out.payment_event(
-                    order_id=o.order_id, kind=kind,
-                    amount_cents=o.total_cents, currency=o.currency,
+                    order_id=o.order_id,
+                    kind=kind,
+                    amount_cents=o.total_cents,
+                    currency=o.currency,
                     occurred_at_ms=out.now_ms,
                 )
 
@@ -366,8 +424,11 @@ class Generator:
                 oid = order_ids[int(rng.integers(0, len(order_ids)))]
             tid = f"tic-{self.state.next_id('ticket')}"
             t = SupportTicket(
-                ticket_id=tid, customer_id=cid, order_id=oid,
-                status=TicketStatus.OPEN, subject="help",
+                ticket_id=tid,
+                customer_id=cid,
+                order_id=oid,
+                status=TicketStatus.OPEN,
+                subject="help",
             )
             self.state.tickets[tid] = t
             out.support_ticket(t, out.now_ms)
@@ -387,8 +448,10 @@ class Generator:
                 out.order_event(o, out.now_ms)
                 if nxt == OrderStatus.PAID:
                     out.payment_event(
-                        order_id=o.order_id, kind=PaymentEventKind.CAPTURED,
-                        amount_cents=o.total_cents, currency=o.currency,
+                        order_id=o.order_id,
+                        kind=PaymentEventKind.CAPTURED,
+                        amount_cents=o.total_cents,
+                        currency=o.currency,
                         occurred_at_ms=out.now_ms,
                     )
 
@@ -413,14 +476,23 @@ class Generator:
             if inv is not None:
                 inv.quantity_on_hand = max(0, inv.quantity_on_hand - qty)
             it = OrderItem(
-                order_item_id=f"{oid}-it-{j}", order_id=oid, sku=sku,
-                quantity=qty, unit_price_cents=unit, warehouse_id=wh,
+                order_item_id=f"{oid}-it-{j}",
+                order_id=oid,
+                sku=sku,
+                quantity=qty,
+                unit_price_cents=unit,
+                warehouse_id=wh,
             )
             items.append(it)
             total += qty * unit
         o = Order(
-            order_id=oid, customer_id=cid, status=OrderStatus.CREATED,
-            total_cents=total, currency="USD", created_at_ms=now_ms, items=items,
+            order_id=oid,
+            customer_id=cid,
+            status=OrderStatus.CREATED,
+            total_cents=total,
+            currency="USD",
+            created_at_ms=now_ms,
+            items=items,
         )
         self.state.orders[oid] = o
         out.order_event(o, now_ms)
@@ -448,8 +520,13 @@ def iter_topics() -> Iterator[str]:
 
 
 __all__ = [
-    "Generator", "GeneratorConfig", "InMemorySink", "Outbox", "Sink",
-    "iter_topics", "run",
+    "Generator",
+    "GeneratorConfig",
+    "InMemorySink",
+    "Outbox",
+    "Sink",
+    "iter_topics",
+    "run",
 ]
 
 

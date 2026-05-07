@@ -5,6 +5,7 @@ view in the future you append a ``ViewSpec`` here, ship the SQL under
 ``sql/views/``, and add a corresponding builder in :mod:`arb.context.local` —
 the MCP interface does not change.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

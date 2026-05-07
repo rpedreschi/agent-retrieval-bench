@@ -11,6 +11,7 @@ checked-in config:
 Imports of the DeltaStream client are deferred so the rest of the harness
 (and the test suite) can run without it installed.
 """
+
 from __future__ import annotations
 
 import os
@@ -48,23 +49,26 @@ class DeltaStreamContextEngine:
             import httpx  # noqa: F401
         except ImportError as e:  # pragma: no cover
             raise RuntimeError(
-                "DeltaStreamContextEngine requires httpx. Install with: "
-                "uv pip install httpx"
+                "DeltaStreamContextEngine requires httpx. Install with: uv pip install httpx"
             ) from e
 
     def get_view(self, query: ViewQuery) -> ViewResult:
         spec = VIEWS.get(query.name)
         if spec is None:
             return ViewResult(
-                name=query.name, engine=self.engine_name,
-                payload=None, visible_at_ms=self.clock_ms(),
+                name=query.name,
+                engine=self.engine_name,
+                payload=None,
+                visible_at_ms=self.clock_ms(),
                 error={"error": "unknown_view", "view": query.name},
             )
         pk_value = query.params.get(spec.primary_key)
         if not pk_value:
             return ViewResult(
-                name=spec.name, engine=self.engine_name,
-                payload=None, visible_at_ms=self.clock_ms(),
+                name=spec.name,
+                engine=self.engine_name,
+                payload=None,
+                visible_at_ms=self.clock_ms(),
                 error={
                     "error": "missing_param",
                     "view": spec.name,
@@ -75,15 +79,19 @@ class DeltaStreamContextEngine:
         rows = self._exec(sql, {"pk": pk_value})
         if not rows:
             return ViewResult(
-                name=spec.name, engine=self.engine_name,
-                payload=None, visible_at_ms=self.clock_ms(),
+                name=spec.name,
+                engine=self.engine_name,
+                payload=None,
+                visible_at_ms=self.clock_ms(),
                 error={"error": "not_found", "view": spec.name, "key": pk_value},
             )
         payload = rows[0]
         validate_view_payload(spec.name, payload)
         return ViewResult(
-            name=spec.name, engine=self.engine_name,
-            payload=payload, visible_at_ms=self.clock_ms(),
+            name=spec.name,
+            engine=self.engine_name,
+            payload=payload,
+            visible_at_ms=self.clock_ms(),
         )
 
     def close(self) -> None:

@@ -3,6 +3,7 @@
 Run the world generator, feed its events into the Variant A bundle, then call
 each tool through SourceServer.call so auth + freshness behaviour are exercised.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -60,8 +61,10 @@ def test_inventory_lookup(fed_bundle) -> None:
     bundle, sink = fed_bundle
     snap = sink.by_topic()["retail.inventory_snapshots"][0]
     res = t_inventory.get_stock(
-        bundle.servers["inventory"], token=TOKEN,
-        sku=snap["sku"], warehouse_id=snap["warehouse_id"],
+        bundle.servers["inventory"],
+        token=TOKEN,
+        sku=snap["sku"],
+        warehouse_id=snap["warehouse_id"],
     )
     assert res["sku"] == snap["sku"]
 
@@ -83,7 +86,9 @@ def test_support_tickets_for_customer(fed_bundle) -> None:
         pytest.skip("no tickets produced this run")
     cid = tix[0]["customer_id"]
     out = t_support.list_tickets_for_customer(
-        bundle.servers["support_tickets"], token=TOKEN, customer_id=cid,
+        bundle.servers["support_tickets"],
+        token=TOKEN,
+        customer_id=cid,
     )
     assert any(t["customer_id"] == cid for t in out)
 
@@ -95,7 +100,9 @@ def test_payment_events_for_order(fed_bundle) -> None:
         pytest.skip("no payment events this run")
     oid = pe[0]["order_id"]
     out = t_payments.list_payment_events_for_order(
-        bundle.servers["payment_events"], token=TOKEN, order_id=oid,
+        bundle.servers["payment_events"],
+        token=TOKEN,
+        order_id=oid,
     )
     assert all(e["order_id"] == oid for e in out)
 
@@ -104,7 +111,9 @@ def test_tool_call_without_token_returns_auth_error(fed_bundle) -> None:
     bundle, sink = fed_bundle
     cid = sink.by_topic()["retail.customers"][0]["customer_id"]
     res = t_customers.get_customer(
-        bundle.servers["customers"], token=None, customer_id=cid,
+        bundle.servers["customers"],
+        token=None,
+        customer_id=cid,
     )
     assert res == {
         "error": "auth_error",
@@ -119,7 +128,9 @@ def test_tool_call_with_wrong_scope_returns_auth_error(fed_bundle) -> None:
     bundle.auth.tokens["support-only"] = {"support:read"}
     cid = sink.by_topic()["retail.customers"][0]["customer_id"]
     res = t_customers.get_customer(
-        bundle.servers["customers"], token="support-only", customer_id=cid,
+        bundle.servers["customers"],
+        token="support-only",
+        customer_id=cid,
     )
     assert res["error"] == "auth_error"
     assert res["code"] == "insufficient_scope"

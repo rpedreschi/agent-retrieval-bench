@@ -4,12 +4,13 @@ A scenario observes WorldState at each tick and may push synthetic events into
 the generator's outbox. Phase 1 ships one reference scenario:
 chargeback -> tier downgrade -> refund attempt.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol
 
-from arb.world.state import PaymentEventKind, ReturnStatus, WorldState
+from arb.world.state import PaymentEventKind, Return, ReturnStatus, WorldState
 
 if TYPE_CHECKING:
     from arb.world.generator import Outbox
@@ -68,8 +69,16 @@ class ChargebackDowngradeRefund:
             occurred_at_ms=now_ms,
         )
         outbox.customer_upsert(cust)
-        # 3. refund attempt that fails (creates a return that gets REJECTED)
+        # 3. refund attempt that fails (creates a return that gets REJECTED).
+        # Mutate state so the snapshot reflects it; emit so consumers see it.
         ret_id = f"ret-scn-{state.next_id('scenario_return')}"
+        state.returns[ret_id] = Return(
+            return_id=ret_id,
+            order_id=target.order_id,
+            status=ReturnStatus.REJECTED,
+            reason="chargeback_already_filed",
+            amount_cents=target.total_cents,
+        )
         outbox.return_event(
             return_id=ret_id,
             order_id=target.order_id,

@@ -6,6 +6,7 @@ read scope; Variant B's token (Phase 3) carries only ``context:read``.
 Tokens and scopes are loaded from a YAML config so experiments can rotate them
 between runs without code changes.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -27,6 +28,7 @@ class AuthError(Exception):
 @dataclass
 class TokenRegistry:
     """Maps bearer token -> set of granted scopes."""
+
     tokens: dict[str, set[str]] = field(default_factory=dict)
 
     @classmethod

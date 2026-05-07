@@ -1,0 +1,16 @@
+# Eval matrix.
+#
+# Tasks: built from the world-state snapshot at task-start time. The three
+#   categories (lookup / transactional / multi-hop) are wired in
+#   src/arb/eval/tasks.py. Multi-hop is the marquee (chargeback story).
+# Variants: A = six per-source MCP servers; B = single context engine.
+# Models: short names resolved via arb.eval.models.MODELS. To swap or add a
+#   model see docs/models.md.
+# Conditions: each task runs under each. Seeds give 3x repetition.
+
+variants: ["A", "B"]
+models:
+  - claude-opus-4-7
+  - gpt-5
+conditions: ["clean", "degraded", "adversarial"]
+seeds: [1, 2, 3]

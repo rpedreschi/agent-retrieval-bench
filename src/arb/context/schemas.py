@@ -5,6 +5,7 @@ your-streaming-stack-of-choice) must produce on a fixed input. The shapes
 deliberately denormalise across source topics so the agent does not have to
 compose joins at inference time — that is the whole point of Variant B.
 """
+
 from __future__ import annotations
 
 from typing import Any

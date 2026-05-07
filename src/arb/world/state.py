@@ -4,6 +4,7 @@ This is the single source of truth. All emitters are pure functions of state
 transitions; they never invent IDs that don't exist in WorldState. This is what
 guarantees referential integrity across the eight Kafka topics.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

@@ -7,6 +7,7 @@ Implementations:
 - :class:`arb.context.deltastream.DeltaStreamContextEngine` — production
   backend; produces the headline benchmark numbers.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field

@@ -3,6 +3,7 @@
 Imports of confluent-kafka are deferred so that the in-memory generator and
 tests do not require a broker or the native librdkafka build at import time.
 """
+
 from __future__ import annotations
 
 import json

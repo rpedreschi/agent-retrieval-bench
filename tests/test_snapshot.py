@@ -25,7 +25,5 @@ def test_snapshot_advances_with_more_ticks(laptop_config) -> None:
     late = snapshot_dict(g.state)
     assert len(late["orders"]) >= len(early["orders"])
     # Snapshot covers all eight kinds of state.
-    for key in (
-        "customers", "orders", "inventory", "returns", "tickets", "skus", "warehouses"
-    ):
+    for key in ("customers", "orders", "inventory", "returns", "tickets", "skus", "warehouses"):
         assert key in late

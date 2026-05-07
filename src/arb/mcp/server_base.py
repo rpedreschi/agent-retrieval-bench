@@ -6,6 +6,7 @@ store + a fault injector + an auth registry + a clock. Tool functions in
 transport wiring lives in ``arb.mcp.servers.*`` and is intentionally thin so
 that tool behaviour can be tested without spinning up an MCP transport.
 """
+
 from __future__ import annotations
 
 import time

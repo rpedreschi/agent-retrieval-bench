@@ -1,4 +1,5 @@
 """Validate emitted events against the Avro schemas via fastavro."""
+
 from __future__ import annotations
 
 import io

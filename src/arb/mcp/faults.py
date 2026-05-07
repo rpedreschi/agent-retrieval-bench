@@ -5,6 +5,7 @@ fixed (or seeded-jittered) delay added before returning. Errors are injected
 probabilistically and surface as a structured ``source_error`` response so the
 agent and the failure classifier can distinguish them from real exceptions.
 """
+
 from __future__ import annotations
 
 import time

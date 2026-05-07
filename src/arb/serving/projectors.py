@@ -2,6 +2,7 @@
 
 Each projector mutates a view dict in place from one ingested event.
 """
+
 from __future__ import annotations
 
 from typing import Any

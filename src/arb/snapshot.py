@@ -3,6 +3,7 @@
 The snapshot is the *frozen ground truth* against which the grader compares
 agent output. See docs/methodology.md.
 """
+
 from __future__ import annotations
 
 import json
@@ -23,15 +24,19 @@ def snapshot_dict(state: WorldState) -> dict[str, Any]:
         "tenant_id": state.tenant_id,
         "warehouses": sorted(state.warehouses),
         "skus": sorted(state.skus),
-        "customers": [
-            asdict(state.customers[k]) for k in sorted(state.customers)
-        ],
+        "customers": [asdict(state.customers[k]) for k in sorted(state.customers)],
         "orders": [
             {
-                **{f: getattr(state.orders[k], f) for f in (
-                    "order_id", "customer_id", "total_cents",
-                    "currency", "created_at_ms",
-                )},
+                **{
+                    f: getattr(state.orders[k], f)
+                    for f in (
+                        "order_id",
+                        "customer_id",
+                        "total_cents",
+                        "currency",
+                        "created_at_ms",
+                    )
+                },
                 "status": state.orders[k].status.value,
                 "items": [asdict(it) for it in state.orders[k].items],
             }

@@ -11,6 +11,7 @@ Run with::
 A DuckDB-backed alternative is stubbed in ``arb.context.duckdb_engine`` for a
 future addition.
 """
+
 from __future__ import annotations
 
 import os
@@ -50,8 +51,12 @@ def build_mcp(config_path: Path) -> Any:
         limit: int | None = None,
     ) -> dict[str, Any]:
         return get_view(
-            engine=engine, auth=auth, token=_token(),
-            name=name, params=params, limit=limit,
+            engine=engine,
+            auth=auth,
+            token=_token(),
+            name=name,
+            params=params,
+            limit=limit,
         )
 
     return mcp
