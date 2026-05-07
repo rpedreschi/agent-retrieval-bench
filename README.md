@@ -13,6 +13,27 @@ Three load-bearing decisions are documented in `docs/methodology.md`:
 snapshot-first grading, per-agent MCP token scoping, and the standardised
 metric names (`cost_per_correct`, `cost_per_correct_degraded`).
 
+## Phase 5 status
+
+- `src/arb/analysis/`: bootstrapped 95% CIs on success rate, cost-per-correct,
+  and latency percentiles; failure-taxonomy aggregation; matplotlib chart
+  helpers (`chart_failure_taxonomy`, `chart_success_rate_by_condition`,
+  `chart_cost_per_correct`).
+- `notebooks/results.ipynb`: produces every chart used in the blog post and
+  talks. Loads JSONL from `arb eval`. Defaults to
+  `tests/fixtures/example_runs.jsonl` so it runs without a real benchmark.
+- `arb.analysis.classifier`: LLM-as-judge stub; trusts the grader's
+  category by default. Real classifier wires in after Phase 4b produces
+  transcripts.
+
+## Phase 4 status
+
+- `src/arb/eval/`: Inspect AI harness skeleton with conditions, agents,
+  three task categories, snapshot-based grading, model registry,
+  Langfuse/RAGAS hooks.
+- `arb eval` CLI: dry-run by default; `--execute` reserved for Phase 4b.
+- `docs/models.md`: how to swap or add a model.
+
 ## Phase 3 status
 
 - Variant B is backed by **DeltaStream**. Three materialised views —
