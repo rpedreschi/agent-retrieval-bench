@@ -1,86 +1,39 @@
 # agent-retrieval-bench
 
-Open benchmark comparing two retrieval architectures for production AI agents:
+An open benchmark comparing two retrieval architectures for production AI agents:
 
-- **Variant A** — MCP-per-source. One tool per operational data source; the LLM composes joins.
-- **Variant B** — Context engine. A single retrieval interface backed by continuously joined materialized views on a streaming engine.
+- **Variant A** — *MCP per source.* One MCP tool per operational data source. The LLM composes joins at inference time across customers, orders, inventory, returns, support, and payments.
+- **Variant B** — *Context engine.* A single MCP retrieval tool backed by continuously joined materialised views maintained on a streaming engine ([DeltaStream](https://www.deltastream.io/)).
 
-This repository is built in phases. Phases 1–3 ship the world-state generator, both variant implementations, and the methodology (snapshot-first grading, per-agent token scoping). Phases 4–6 add the eval harness, failure taxonomy, and reproducibility wrapper.
+The benchmark measures whether the architectural shift improves task success rate, grounding quality, latency distributions, cost per successful task, and the **shape of the failure distribution** under realistic production conditions (clean / degraded / adversarial).
 
-## Methodology
+Engineering credibility, statistical rigor, and honest reporting matter more than headline numbers.
 
-Three load-bearing decisions are documented in `docs/methodology.md`:
-snapshot-first grading, per-agent MCP token scoping, and the standardised
-metric names (`cost_per_correct`, `cost_per_correct_degraded`).
-
-## Phase 5 status
-
-- `src/arb/analysis/`: bootstrapped 95% CIs on success rate, cost-per-correct,
-  and latency percentiles; failure-taxonomy aggregation; matplotlib chart
-  helpers (`chart_failure_taxonomy`, `chart_success_rate_by_condition`,
-  `chart_cost_per_correct`).
-- `notebooks/results.ipynb`: produces every chart used in the blog post and
-  talks. Loads JSONL from `arb eval`. Defaults to
-  `tests/fixtures/example_runs.jsonl` so it runs without a real benchmark.
-- `arb.analysis.classifier`: LLM-as-judge stub; trusts the grader's
-  category by default. Real classifier wires in after Phase 4b produces
-  transcripts.
-
-## Phase 4 status
-
-- `src/arb/eval/`: Inspect AI harness skeleton with conditions, agents,
-  three task categories, snapshot-based grading, model registry,
-  Langfuse/RAGAS hooks.
-- `arb eval` CLI: dry-run by default; `--execute` reserved for Phase 4b.
-- `docs/models.md`: how to swap or add a model.
-
-## Phase 3 status
-
-- Variant B is backed by **DeltaStream**. Three materialised views —
-  `customer_360`, `order_state`, `returns_eligibility` — with output
-  schemas in `src/arb/context/schemas.py` and reference SQL under
-  `sql/views/`.
-- `ContextEngine` protocol with a single `get_view(name, params)` entry
-  point. Implementation: `arb.context.deltastream.DeltaStreamContextEngine`.
-  Credentials come from environment variables only (see `.env.example`).
-- Single Variant B MCP server (`python -m arb.mcp.servers.context_entrypoint`)
-  with one bearer token carrying only `context:read`.
-- `config/variant_b.yaml` with per-view freshness SLA (default 250 ms,
-  per-view overrides supported).
-- A DuckDB-backed engine is stubbed in `arb.context.duckdb_engine` for a
-  future addition; not implemented in v1.
-
-## Phase 2 status
-
-- Six per-source MCP servers (Variant A) under `src/arb/mcp/`:
-  customers, orders, inventory, returns, support, payments.
-- Each server is fed by a `ServingStore` with configurable
-  `replication_lag_ms` and `cache_ttl_ms` (per-source freshness profiles in
-  `config/variant_a.yaml`).
-- Bearer-token auth: Variant A's token carries the six `*:read` scopes and
-  nothing else. Calls without scope return a structured `auth_error`.
-- Fault injection (`latency_ms`, `error_rate`) wired for the degraded
-  condition; injected errors return a structured `source_error`.
-- `arb snapshot` writes a deterministic ground-truth JSON used for grading.
-- FastMCP wiring exposes one MCP server per source over stdio:
-  `python -m arb.mcp.servers.entrypoints {customers|orders|...}`.
-
-## Phase 1 status
-
-- Single coherent world-state generator emitting to 8 Avro-encoded Kafka topics under the `retail.` namespace.
-- Configurable scale (`config/scale.laptop.yaml`, `config/scale.full.yaml`).
-- Deterministic given a seed; replayable named scenarios (incl. `chargeback_downgrade_refund`).
-- Local Kafka (KRaft) + Confluent Schema Registry via `docker compose`.
-- Tests for referential integrity, determinism, and scenario replay.
-
-## Quickstart (laptop mode)
+## Quickstart
 
 ```bash
 uv sync --extra dev
-docker compose up -d            # local Kafka + Schema Registry
-uv run arb generate --config config/scale.laptop.yaml --seed 42
-uv run pytest
+docker compose up -d            # local Kafka (KRaft) + Confluent Schema Registry
+make bench-laptop               # end-to-end laptop run (Variant A only; B needs DeltaStream)
+uv run pytest                   # 89 tests, no creds required
+jupyter notebook notebooks/results.ipynb
 ```
+
+The notebook produces every chart used in the blog post and conference talks. By default it consumes a synthetic fixture so it runs without a real benchmark; point `RUNS_PATH` at the output of `arb eval --execute` to render real numbers.
+
+## Methodology
+
+Three load-bearing decisions documented in `docs/methodology.md`:
+
+1. **Snapshot-first grading.** The world generator emits to Kafka continuously, but each task is graded against a frozen `ground_truth_snapshot.json` captured at task-start time. Grading never races live state.
+2. **Per-agent MCP token scoping.** Variant A's bearer token carries six per-source `*:read` scopes; Variant B's carries only `context:read`. Auth is enforced from day one.
+3. **Headline metric:** `cost_per_correct_degraded` — total cost divided by # correct, restricted to the *degraded* condition. Clean is the demo; degraded is production.
+
+## Architecture
+
+See `docs/architecture.md` for the full picture. In one paragraph:
+
+A single coherent world-state generator emits Avro-encoded events to eight Kafka topics under the `retail.` namespace. Variant A reads from those topics through six per-source serving stores (each with its own configurable replication lag and cache TTL); Variant B reads from three DeltaStream materialised views (`customer_360`, `order_state`, `returns_eligibility`) defined in `sql/views/`. The eval harness (Inspect AI) runs the same agent — same model, same system prompt — under both, the only difference being the toolset, across three conditions and two models, with bootstrapped 95% CIs and a structured failure taxonomy.
 
 ## Topics
 
@@ -97,17 +50,25 @@ All topics carry a `tenant_id` field (single-tenant in v1).
 | `retail.support_tickets` | Customer service interactions. |
 | `retail.payment_events` | Chargebacks, refunds, payment failures. |
 
-## Architecture decisions (locked for v1)
+## Phase status
 
-See `docs/` (added in later phases) and the inline rationale in `src/arb/world/`.
+- **Phase 1** — World-state generator + 8 Avro Kafka topics + Docker Compose. ✅
+- **Phase 2** — Variant A: six per-source MCP servers with freshness profiles, fault injection, scoped auth. ✅
+- **Phase 3** — Variant B: single DeltaStream-backed MCP server with three materialised views. ✅ A DuckDB-backed alternative is stubbed (`arb.context.duckdb_engine`).
+- **Phase 4** — Inspect AI eval harness skeleton: three task categories, snapshot grading, model registry. ✅ Real-model invocation lands in Phase 4b.
+- **Phase 5** — Analysis surface: bootstrapped CIs, failure-taxonomy aggregation, matplotlib charts, results notebook. ✅
+- **Phase 6** — Reproducibility: `make bench-laptop`, `CONTRIBUTING.md`, extension-point docs. ✅ (this phase)
+
+## Extending
+
+`docs/extending.md` — how to add a new materialised view, a new task category, a new condition, or a new model.
 
 ## What's NOT in v1
 
 - Vector / embedding topic — extension point for future RAG comparison.
 - Multi-tenancy — `tenant_id` exists but is hardcoded to one value.
-- Eval harness — Phase 4.
-- DuckDB-backed alternative for Variant B — stub only; see
-  `arb.context.duckdb_engine`.
+- DuckDB-backed Variant B — stub only; see `arb.context.duckdb_engine`.
+- Real-model execution wiring — Phase 4b.
 
 ## License
 

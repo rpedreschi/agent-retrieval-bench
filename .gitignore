@@ -12,3 +12,5 @@ build/
 .coverage
 htmlcov/
 .env
+out/
+.ipynb_checkpoints/
